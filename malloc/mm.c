@@ -46,6 +46,7 @@
 
 /* Global variables */
 static char *heap_listp = 0;  /* Pointer to first block */
+static char *free_listp = 0;
 #ifdef NEXT_FIT
 static char *rover;           /* Next fit rover */
 #endif
@@ -81,6 +82,7 @@ int mm_init(void)
     /* $begin mminit */
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
+    
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL)
         return -1;
     return 0;
@@ -266,7 +268,11 @@ static void *extend_heap(size_t words)
     PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1)); /* New epilogue header */ //line:vm:mm:newepihdr
 
     /* Coalesce if the previous block was free */
-    return coalesce(bp);                                          //line:vm:mm:returnblock
+    bp = coalesce(bp);
+    if(free_listp == NULL)
+        free_listp = bp;
+
+    return bp;                                          //line:vm:mm:returnblock
 }
 /* $end mmextendheap */
 
@@ -323,6 +329,7 @@ static void *find_fit(size_t asize)
 #else
     /* $begin mmfirstfit */
     /* First-fit search */
+    /** Instead of the loop below, search in your free list instead. **/
     void *bp;
 
     for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
