@@ -334,11 +334,23 @@ static void *find_fit(size_t asize)
     /** Instead of the loop below, search in your free list instead. **/
     void *bp;
 
-    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
-            return bp;
-    }
-    }
+    //THIS IS THE ORIGINAL FOR LOOP TO SEARCH FOR THE FREE AVAILABLE BLOCK!
+    // for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+    //     if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
+    //         return bp;
+    // }
+    // }
+
+    void** current = (void**)free_listp;
+    //do while ensures at least once to run
+    do {
+        if (GET_SIZE(HDRP(current)) >= asize) {
+            return current; //Return the node with the desired size
+        }
+        void* current_next_ptr = *(current + DSIZE);
+        current = (void**)current_next_ptr; //Move to the next block
+    } while (current != free_listp);
+    
     return NULL; /* No fit */
 #endif
 }
