@@ -411,26 +411,29 @@ void addList(void* newBlockPointer)
 }
 
 
-void removeList(void* removeBlockPointer)
-{
-    //case 1: check if the list is empty
-    if (free_listp == NULL){
+void removeList(void* removeBlockPointer) {
+    void** ptr = (void**)removeBlockPointer;
+
+    // Case 1: check if the list is empty
+    if (free_listp == NULL) {
         return;
     }
-    //case 2: check if the user is remove the last element in the list
-    else if (*removeBlockPointer == removeBlockPointer){
+    // Case 2: check if the user is removing the last element in the list
+    else if (*ptr == removeBlockPointer) {
         free_listp = NULL;
-        *removeBlockPointer = NULL;
-        *(removeBlockPointer + DSIZE) = NULL;
+        *ptr = NULL;
+        *(ptr + DSIZE) = NULL;
     }
-    //case 3: generic remove
+    // Case 3: generic remove
     else {
-        //check if user is removing the head of the list
-        if (removeBlockPointer == free_listp){
-            //the next block to what the user is trying to remove.
-            free_listp = *(removeBlockPointer + DSIZE);
+        // Check if the user is removing the head of the list
+        if (removeBlockPointer == free_listp) {
+            // The next block to what the user is trying to remove.
+            free_listp = *(ptr + DSIZE);
         }
-        *(*(removeBlockPointer + DSIZE)) = *removeBlockPointer;
-        **removeBlockPointer = *(removeBlockPointer + DSIZE);
+        void** remove_next_ptr = (void**) *(ptr + DSIZE);
+        *remove_next_ptr = *ptr;
+        void** remove_prev_ptr = (void**) *ptr;
+        *remove_prev_ptr = *(ptr + DSIZE);
     }
 }
