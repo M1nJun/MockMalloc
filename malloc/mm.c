@@ -271,6 +271,8 @@ static void *extend_heap(size_t words)
     bp = coalesce(bp);
     if(free_listp == NULL)
         free_listp = bp;
+    *bp = bp; //prev
+    *(bp + DSIZE) = bp; //next
 
     return bp;                                          //line:vm:mm:returnblock
 }
@@ -394,4 +396,40 @@ void checkheap(int verbose)
         printblock(bp);
     if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp))))
         printf("Bad epilogue header\n");
+}
+
+//need to receive a pointer to the new block
+void addList(void* newBlockPointer)
+{
+    void** ptr = (void**)newBlockPointer;
+    void** temp = (void**)(free_listp + DSIZE);
+
+    *(free_listp + DSIZE) = newBlockPointer;
+    *temp = newBlockPointer;
+    *ptr = free_listp;
+    *(ptr + DSIZE) = temp;
+}
+
+
+void removeList(void* removeBlockPointer)
+{
+    //case 1: check if the list is empty
+    if (free_listp = NULL){
+        return;
+    }
+    //case 2: check if the user is remove the last element in the list
+    else if (*removeBlockPointer = removeBlockPointer){
+        free_listp = NULL;
+        *removeBlockPointer = NULL;
+        *(removeBlockPointer + DSIZE) = NULL;
+    }
+    //case 3: generic remove
+    else {
+        //check if user is removing the head of the list
+        if (removeBlockPointer = free_listp){
+            free_listp = something; //maybe like the next block to what the user is trying to remove.
+        }
+        
+
+    }
 }
