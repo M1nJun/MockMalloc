@@ -1,23 +1,35 @@
-void removeList(void* removeBlockPointer)
-{
-    //case 1: check if the list is empty
-    if (free_listp == NULL){
-        return;
-    }
-    //case 2: check if the user is remove the last element in the list
-    else if (*removeBlockPointer == removeBlockPointer){
-        free_listp = NULL;
-        *removeBlockPointer = NULL;
-        *(removeBlockPointer + DSIZE) = NULL;
-    }
-    //case 3: generic remove
-    else {
-        //check if user is removing the head of the list
-        if (removeBlockPointer == free_listp){
-            //the next block to what the user is trying to remove.
-            free_listp = *(removeBlockPointer + DSIZE);
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "mm.h"
+#include "memlib.h"
+
+#define NUM_BLOCKS 3  // Number of blocks to allocate
+
+int main() {
+    // Initialize memory manager
+    mm_init();
+
+    void *blocks[NUM_BLOCKS];
+
+    // allocate some blocks
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        size_t block_size = rand() % 128;  // Random block size (0 to 127 bytes)
+        blocks[i] = mm_malloc(block_size);
+        if (blocks[i] == NULL) {
+            fprintf(stderr, "Memory allocation failed for block %d\n", i);
+            return 1;
         }
-        *(*(removeBlockPointer + DSIZE)) = *removeBlockPointer;
-        **removeBlockPointer = *(removeBlockPointer + DSIZE);
+        printf("Allocated block %d of size %lu bytes\n", i, (unsigned long)block_size);
     }
+
+    // free blocks
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        int random_index = rand() % NUM_BLOCKS;  // Randomly choose a block to free
+        mm_free(blocks[random_index]);
+        printf("Freed block %d\n", random_index);
+    }
+
+    return 0;
 }

@@ -12,7 +12,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "csapp.h"
+//#include "csapp.h"
 #include "memlib.h"
 
 #define MAX_HEAP (20*(1<<20))  /* 20 MB */
@@ -29,7 +29,7 @@ static char *mem_max_addr; /* Max legal heap addr plus 1*/
  */
 void mem_init(void)
 {
-    mem_heap = (char *)Malloc(MAX_HEAP);
+    mem_heap = (char *)malloc(MAX_HEAP);
     mem_brk = (char *)mem_heap;               
     mem_max_addr = (char *)(mem_heap + MAX_HEAP); 
 }

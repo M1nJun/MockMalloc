@@ -60,6 +60,49 @@ static void printblock(void *bp);
 static void checkheap(int verbose);
 static void checkblock(void *bp);
 
+
+//need to receive a pointer to the new block
+void addList(void* newBlockPointer)
+{
+    void** ptr = (void**)newBlockPointer;
+    void** temp = (void**)(free_listp + DSIZE);
+
+    *((char**)(free_listp + DSIZE)) = newBlockPointer;
+    *temp = newBlockPointer;
+    *ptr = free_listp;
+    *(ptr + DSIZE) = temp;
+}
+
+
+void removeList(void* removeBlockPointer)
+{
+    void** ptr = (void**)removeBlockPointer;
+
+    // Case 1: check if the list is empty
+    if (free_listp == NULL) {
+        return;
+    }
+    // Case 2: check if the user is removing the last element in the list
+    else if (*ptr == removeBlockPointer) {
+        free_listp = NULL;
+        *ptr = NULL;
+        *(ptr + DSIZE) = NULL;
+    }
+    // Case 3: generic remove
+    else {
+        // Check if the user is removing the head of the list
+        if (removeBlockPointer == free_listp) {
+            // The next block to what the user is trying to remove.
+            free_listp = *(ptr + DSIZE);
+        }
+        void** remove_next_ptr = (void**) *(ptr + DSIZE);
+        *remove_next_ptr = *ptr;
+        void** remove_prev_ptr = (void**) *ptr;
+        *remove_prev_ptr = *(ptr + DSIZE);
+    }
+}
+
+
 /*
  * mm_init - Initialize the memory manager
  */
@@ -125,6 +168,7 @@ void *mm_malloc(size_t size)
     if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
         return NULL;                                  //line:vm:mm:growheap2
     place(bp, asize);                                 //line:vm:mm:growheap3
+    removeList(bp);
     return bp;
 }
 /* $end mmmalloc */
@@ -150,6 +194,7 @@ void mm_free(void *bp)
     PUT(HDRP(bp), PACK(size, 0));
     PUT(FTRP(bp), PACK(size, 0));
     coalesce(bp);
+    addList(bp);
 }
 
 /* $end mmfree */
@@ -171,12 +216,14 @@ static void *coalesce(void *bp)
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size,0));
+        removeList(NEXT_BLKP(bp));
     }
 
     else if (!prev_alloc && next_alloc) {      /* Case 3 */
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));
         PUT(FTRP(bp), PACK(size, 0));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
+        removeList(bp);
         bp = PREV_BLKP(bp);
     }
 
@@ -185,6 +232,8 @@ static void *coalesce(void *bp)
             GET_SIZE(FTRP(NEXT_BLKP(bp)));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
         PUT(FTRP(NEXT_BLKP(bp)), PACK(size, 0));
+        removeList(bp);
+        removeList(NEXT_BLKP(bp));
         bp = PREV_BLKP(bp);
     }
     /* $end mmfree */
@@ -271,8 +320,8 @@ static void *extend_heap(size_t words)
     bp = coalesce(bp);
     if(free_listp == NULL)
         free_listp = bp;
-    *bp = bp; //prev
-    *(bp + DSIZE) = bp; //next
+    *((char**)bp) = bp; //prev
+    *((char**)(bp + DSIZE)) = bp; //next
 
     return bp;                                          //line:vm:mm:returnblock
 }
@@ -349,8 +398,8 @@ static void *find_fit(size_t asize)
         }
         void* current_next_ptr = *(current + DSIZE);
         current = (void**)current_next_ptr; //Move to the next block
-    } while (current != free_listp);
-    
+    } while (current != (void**)free_listp);
+
     return NULL; /* No fit */
 #endif
 }
@@ -410,42 +459,3 @@ void checkheap(int verbose)
         printf("Bad epilogue header\n");
 }
 
-//need to receive a pointer to the new block
-void addList(void* newBlockPointer)
-{
-    void** ptr = (void**)newBlockPointer;
-    void** temp = (void**)(free_listp + DSIZE);
-
-    *(free_listp + DSIZE) = newBlockPointer;
-    *temp = newBlockPointer;
-    *ptr = free_listp;
-    *(ptr + DSIZE) = temp;
-}
-
-
-void removeList(void* removeBlockPointer) {
-    void** ptr = (void**)removeBlockPointer;
-
-    // Case 1: check if the list is empty
-    if (free_listp == NULL) {
-        return;
-    }
-    // Case 2: check if the user is removing the last element in the list
-    else if (*ptr == removeBlockPointer) {
-        free_listp = NULL;
-        *ptr = NULL;
-        *(ptr + DSIZE) = NULL;
-    }
-    // Case 3: generic remove
-    else {
-        // Check if the user is removing the head of the list
-        if (removeBlockPointer == free_listp) {
-            // The next block to what the user is trying to remove.
-            free_listp = *(ptr + DSIZE);
-        }
-        void** remove_next_ptr = (void**) *(ptr + DSIZE);
-        *remove_next_ptr = *ptr;
-        void** remove_prev_ptr = (void**) *ptr;
-        *remove_prev_ptr = *(ptr + DSIZE);
-    }
-}
