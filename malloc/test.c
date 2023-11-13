@@ -9,6 +9,7 @@
 
 int main() {
     // Initialize memory manager
+    mem_init();
     mm_init();
 
     void *blocks[NUM_BLOCKS];
@@ -26,9 +27,8 @@ int main() {
 
     // free blocks
     for (int i = 0; i < NUM_BLOCKS; i++) {
-        int random_index = rand() % NUM_BLOCKS;  // Randomly choose a block to free
-        mm_free(blocks[random_index]);
-        printf("Freed block %d\n", random_index);
+        mm_free(blocks[i]);
+        printf("Freed block %d\n", i);
     }
 
     return 0;

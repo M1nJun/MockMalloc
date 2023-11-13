@@ -64,13 +64,29 @@ static void checkblock(void *bp);
 //need to receive a pointer to the new block
 void addList(void* newBlockPointer)
 {
+    // no block case
+    if (free_listp == NULL){
+        free_listp = newBlockPointer;
+        *((char**)free_listp) = free_listp; //prev
+        *((char**)(free_listp + DSIZE)) = free_listp; //next
+    }
     void** ptr = (void**)newBlockPointer;
-    void** temp = (void**)(free_listp + DSIZE);
-
-    *((char**)(free_listp + DSIZE)) = newBlockPointer;
-    *temp = newBlockPointer;
-    *ptr = free_listp;
-    *(ptr + DSIZE) = temp;
+    void* temp = *((void**)(free_listp + DSIZE));
+    // single block case
+    if (temp == free_listp) {
+        //I could use temp
+        *((void**)(free_listp + DSIZE)) = newBlockPointer;
+        *((void**)(free_listp)) = newBlockPointer;
+        *ptr = free_listp;
+        *(ptr + DSIZE) = free_listp;
+    }
+    // generic case
+    else{
+        *((char**)(free_listp + DSIZE)) = newBlockPointer;
+        *ptr = free_listp;
+        *(ptr + DSIZE) = temp;
+        *((void**)temp) = newBlockPointer;
+    }
 }
 
 
@@ -168,7 +184,6 @@ void *mm_malloc(size_t size)
     if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
         return NULL;                                  //line:vm:mm:growheap2
     place(bp, asize);                                 //line:vm:mm:growheap3
-    removeList(bp);
     return bp;
 }
 /* $end mmmalloc */
@@ -318,11 +333,7 @@ static void *extend_heap(size_t words)
 
     /* Coalesce if the previous block was free */
     bp = coalesce(bp);
-    if(free_listp == NULL)
-        free_listp = bp;
-    *((char**)bp) = bp; //prev
-    *((char**)(bp + DSIZE)) = bp; //next
-
+    addList(bp);
     return bp;                                          //line:vm:mm:returnblock
 }
 /* $end mmextendheap */
@@ -344,6 +355,8 @@ static void place(void *bp, size_t asize)
         bp = NEXT_BLKP(bp);
         PUT(HDRP(bp), PACK(csize-asize, 0));
         PUT(FTRP(bp), PACK(csize-asize, 0));
+        addList(bp);
+        
     }
     else {
         PUT(HDRP(bp), PACK(csize, 1));
@@ -394,6 +407,7 @@ static void *find_fit(size_t asize)
     //do while ensures at least once to run
     do {
         if (GET_SIZE(HDRP(current)) >= asize) {
+            removeList(current); //remove big block
             return current; //Return the node with the desired size
         }
         void* current_next_ptr = *(current + DSIZE);
