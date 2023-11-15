@@ -4,6 +4,11 @@
       "cwd": "/Users/iminjun/Desktop/github repositories/Mock_Malloc/malloc",
       "binaryPath": "/Users/iminjun/Desktop/github repositories/Mock_Malloc/malloc/test",
       "binaryArgs": []
+    },
+    {
+      "cwd": "/Users/iminjun/Desktop/github repositories/MockMalloc/malloc",
+      "binaryPath": "/Users/iminjun/Desktop/github repositories/MockMalloc/malloc/test",
+      "binaryArgs": []
     }
   ]
 }

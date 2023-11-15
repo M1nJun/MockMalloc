@@ -114,7 +114,7 @@ void removeList(void* removeBlockPointer)
         void** remove_next_ptr = (void**) *(ptr + DSIZE);
         *remove_next_ptr = *ptr;
         void** remove_prev_ptr = (void**) *ptr;
-        *remove_prev_ptr = *(ptr + DSIZE);
+        *(remove_prev_ptr+DSIZE) = *(ptr + DSIZE);
     }
 }
 
