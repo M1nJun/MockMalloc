@@ -175,6 +175,7 @@ void *mm_malloc(size_t size)
 
     /* Search the free list for a fit */
     if ((bp = find_fit(asize)) != NULL) {  //line:vm:mm:findfitcall
+        removeList(bp);
         place(bp, asize);                  //line:vm:mm:findfitplace
         return bp;
     }
@@ -183,6 +184,7 @@ void *mm_malloc(size_t size)
     extendsize = MAX(asize,CHUNKSIZE);                 //line:vm:mm:growheap1
     if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
         return NULL;                                  //line:vm:mm:growheap2
+    removeList(bp);
     place(bp, asize);                                 //line:vm:mm:growheap3
     return bp;
 }
@@ -228,27 +230,27 @@ static void *coalesce(void *bp)
     }
 
     else if (prev_alloc && !next_alloc) {      /* Case 2 */
+        removeList(NEXT_BLKP(bp));
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size,0));
-        removeList(NEXT_BLKP(bp));
     }
 
     else if (!prev_alloc && next_alloc) {      /* Case 3 */
+        removeList(bp);
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));
         PUT(FTRP(bp), PACK(size, 0));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
-        removeList(bp);
         bp = PREV_BLKP(bp);
     }
 
     else {                                     /* Case 4 */
+        removeList(bp);
+        removeList(NEXT_BLKP(bp));
         size += GET_SIZE(HDRP(PREV_BLKP(bp))) +
             GET_SIZE(FTRP(NEXT_BLKP(bp)));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
         PUT(FTRP(NEXT_BLKP(bp)), PACK(size, 0));
-        removeList(bp);
-        removeList(NEXT_BLKP(bp));
         bp = PREV_BLKP(bp);
     }
     /* $end mmfree */
